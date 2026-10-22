@@ -1,0 +1,277 @@
+# The fixed list of YouTube channels this project tracks.
+#
+# Edit by hand. Each entry needs a `handle` (the @name shown on the channel's
+# page, e.g. youtube.com/@CNN). Any other keys you add are free-form: they're
+# stored alongside the API data as CATALOG_ENTRY, so dbt can use them later
+# without Dagster needing to know what they mean.
+#
+# Keys used below (all optional, change them however you like):
+#   group:  study   = political YouTubers/streamers being analysed
+#           control = news outlets, the baseline to compare against
+#   type:   streamer    = live-streams as a main format (VOD playlists matter here)
+#           commentator = personality-led show/channel, mostly pre-recorded
+#           network     = news organisation
+#   org:    the outlet/network a personality belongs to, if any
+#   lean:   a rough, conventional label for grouping in analysis:
+#           left / right / mixed (both sides or heterodox) / center / neutral.
+#           Subjective; adjust to whatever definition your analysis uses.
+#
+# Before materializing after adding/changing handles, check them with
+#     uv run python .dev/ping_channels.py
+# (1 quota unit per handle, writes nothing). If a handle is wrong anyway,
+# yt_catalog_initial fails and names it before writing anything.
+#
+# After editing, re-materialize the yt_catalog_initial asset to load the changes.
+
+channels:
+  # ===========================================================================
+  # STUDY GROUP
+  # ===========================================================================
+
+  # --- Daily Wire (and affiliated) -------------------------------------------
+  - handle: "@DailyWire"
+    group: study
+    type: network
+    org: Daily Wire
+    lean: right
+  - handle: "@BenShapiro"
+    group: study
+    type: commentator
+    org: Daily Wire
+    lean: right
+  - handle: "@MattWalsh"
+    group: study
+    type: commentator
+    org: Daily Wire
+    lean: right
+  - handle: "@MichaelKnowles"
+    group: study
+    type: commentator
+    org: Daily Wire
+    lean: right
+  - handle: "@AndrewKlavan"
+    group: study
+    type: commentator
+    org: Daily Wire
+    lean: right
+  - handle: "@JordanBPeterson"
+    group: study
+    type: commentator
+    org: Daily Wire
+    lean: right
+    notes: "Affiliated (DailyWire+ content deal) rather than a core host"
+
+  # --- Former Daily Wire (before/after leaving comparisons) -------------------
+  - handle: "@RealCandaceO"
+    group: study
+    type: commentator
+    lean: right
+    notes: "Left Daily Wire in March 2024"
+  - handle: "@bbrettcooper"  # The Brett Cooper Show
+    group: study
+    type: commentator
+    lean: right
+    notes: "Left Daily Wire in 2024 (formerly The Comments Section)"
+
+  # --- Left streamers ---------------------------------------------------------
+  - handle: "@destiny"
+    group: study
+    type: streamer
+    lean: left
+    notes: "Check whether full VODs live here or on a separate VOD/clips channel"
+  - handle: "@HasanAbi"
+    group: study
+    type: streamer
+    lean: left
+    notes: "Check for a separate VOD channel too"
+  - handle: "@Vaush"
+    group: study
+    type: streamer
+    lean: left
+    notes: "Check for a separate VOD channel too"
+  - handle: "@TheMajorityReport"
+    group: study
+    type: streamer
+    lean: left
+    notes: "Daily live show (Sam Seder); full episodes stream live"
+  - handle: "@Lonerbox"
+    group: study
+    type: streamer
+    lean: left
+    notes: "Destiny-adjacent debate scene"
+
+  # --- Right streamers / live daily shows -------------------------------------
+  - handle: "@TimcastIRL"
+    group: study
+    type: streamer
+    org: Timcast
+    lean: right
+  - handle: "@bennyjohnson"
+    group: study
+    type: streamer
+    lean: right
+    notes: "Daily live show"
+  - handle: "@CharlieKirkShow"
+    group: study
+    type: streamer
+    org: TPUSA
+    lean: right
+    notes: "Daily live show"
+  - handle: "@PBDPodcast"
+    group: study
+    type: streamer
+    lean: right
+    notes: "Patrick Bet-David; long live episodes"
+  - handle: "@The_Crucible"  # Andrew Wilson
+    group: study
+    type: streamer
+    lean: right
+    notes: "Debate streamer; frequently debates Destiny"
+
+  # --- Debate / crossover streams ---------------------------------------------
+  - handle: "@WhateverPodcast"
+    group: study
+    type: streamer
+    lean: mixed
+    notes: "Live debate format with political guests"
+
+  # --- Left commentators / outlets --------------------------------------------
+  - handle: "@TheYoungTurks"
+    group: study
+    type: commentator
+    org: TYT
+    lean: left
+  - handle: "@TheDamageReport"
+    group: study
+    type: commentator
+    org: TYT
+    lean: left
+  - handle: "@briantylercohen"
+    group: study
+    type: commentator
+    lean: left
+  - handle: "@SecularTalk"  # Kyle Kulinski
+    group: study
+    type: commentator
+    lean: left
+  - handle: "@BadFaithPodcast"
+    group: study
+    type: commentator
+    lean: left
+  - handle: "@AdamMockler"
+    group: study
+    type: commentator
+    lean: left
+  - handle: "@MeidasTouch"
+    group: study
+    type: network
+    lean: left
+    notes: "Left-leaning counterpart to the Daily Wire in scale"
+  - handle: "@PodSaveAmerica"
+    group: study
+    type: network
+    org: Crooked Media
+    lean: left
+  - handle: "@thedavidpakmanshow"
+    group: study
+    type: commentator
+    lean: left
+
+  # --- Right commentators (outside Daily Wire) ---------------------------------
+  - handle: "@StevenCrowder"
+    group: study
+    type: commentator
+    lean: right
+  - handle: "@TuckerCarlson"
+    group: study
+    type: commentator
+    lean: right
+    notes: "Tucker Carlson Network"
+  - handle: "@MegynKelly"
+    group: study
+    type: commentator
+    lean: right
+
+  # --- Mixed / heterodox / crossover ------------------------------------------
+  - handle: "@breakingpoints"
+    group: study
+    type: commentator
+    lean: mixed
+    notes: "Left/right co-hosted populist show (Krystal Ball, Saagar Enjeti)"
+  - handle: "@PiersMorganUncensored"
+    group: study
+    type: commentator
+    lean: mixed
+    notes: "Debate format, guests from both sides"
+  - handle: "@thejimmydoreshow"
+    group: study
+    type: commentator
+    lean: mixed
+    notes: "Started on the left, now heterodox"
+  - handle: "@joerogan"  # PowerfulJRE
+    group: study
+    type: commentator
+    lean: mixed
+    notes: "Politics-adjacent rather than political; included as a reach benchmark"
+
+  # ===========================================================================
+  # CONTROL GROUP: news outlets
+  # Most have tens of thousands of uploads; their first backfill in yt_uploads
+  # may span several days of quota (max_units caps each run).
+  # ===========================================================================
+
+  # --- Neutral baseline -------------------------------------------------------
+  - handle: "@cspan"
+    group: control
+    type: network
+    lean: neutral
+    notes: "Unedited proceedings, no commentary"
+
+  # --- Broadcast / wire / public ----------------------------------------------
+  - handle: "@NBCNews"
+    group: control
+    type: network
+  - handle: "@ABCNews"
+    group: control
+    type: network
+  - handle: "@CBSNews"
+    group: control
+    type: network
+  - handle: "@PBSNewsHour"
+    group: control
+    type: network
+  - handle: "@Reuters"
+    group: control
+    type: network
+  - handle: "@AssociatedPress"
+    group: control
+    type: network
+  - handle: "@thehill"  # home of Rising
+    group: control
+    type: network
+  - handle: "@BBCNews"
+    group: control
+    type: network
+    notes: "Non-US control"
+
+  # --- Cable --------------------------------------------------------------------
+  - handle: "@CNN"
+    group: control
+    type: network
+  - handle: "@FoxNews"
+    group: control
+    type: network
+    lean: right
+  - handle: "@msnow"  # network rebranded as MS NOW; old handle still resolves
+    group: control
+    type: network
+    lean: left
+  - handle: "@Newsmax"
+    group: control
+    type: network
+    lean: right
+  - handle: "@NewsNation"
+    group: control
+    type: network
+    lean: center
+    notes: "Positions itself as centrist cable news"

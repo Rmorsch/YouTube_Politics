@@ -9,12 +9,17 @@ dependencies = [
     "dbt-snowflake>=1.12.1",
     "google-api-python-client>=2.200.0",
     "python-dotenv>=1.2.3",
+    "pyyaml>=6.0.3",
 ]
 
 [dependency-groups]
 dev = [
     "dagster-dg-cli",
     "dagster-webserver",
+    "pandas>=2.3.3",
+]
+notebook = [
+    "ipykernel>=7.3.0",
 ]
 
 [build-system]

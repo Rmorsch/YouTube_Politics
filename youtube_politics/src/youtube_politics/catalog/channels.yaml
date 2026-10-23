@@ -111,7 +111,7 @@ channels:
     type: streamer
     lean: right
     notes: "Daily live show"
-  - handle: "@CharlieKirkShow"
+  - handle: "@RealCharlieKirk"  # The Charlie Kirk Show; @CharlieKirkShow is an empty squatter channel
     group: study
     type: streamer
     org: TPUSA
@@ -129,7 +129,7 @@ channels:
     notes: "Debate streamer; frequently debates Destiny"
 
   # --- Debate / crossover streams ---------------------------------------------
-  - handle: "@WhateverPodcast"
+  - handle: "@whatever"  # @WhateverPodcast is an unrelated 9-subscriber channel
     group: study
     type: streamer
     lean: mixed
@@ -266,7 +266,7 @@ channels:
     group: control
     type: network
     lean: left
-  - handle: "@Newsmax"
+  - handle: "@NewsmaxTV"  # @Newsmax is an empty placeholder channel (0 videos)
     group: control
     type: network
     lean: right

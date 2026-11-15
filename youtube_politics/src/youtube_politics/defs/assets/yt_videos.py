@@ -1,6 +1,8 @@
 """Snapshot full public details + stats for uploaded videos, refreshing by age.
 
-Picks video IDs from RAW.YT_UPLOADS (yt_uploads), calls videos.list for them
+Picks video IDs from RAW.YT_UPLOADS (yt_uploads), plus YT_PLAYLIST_ITEMS
+(yt_playlists) and YT_SEARCH_RESULTS (yt_search_backfill) for history past the
+uploads list's 20k cap. Calls videos.list for them
 in batches of 50 (1 quota unit per batch), and appends one row per video to
 RAW.YT_VIDEOS. Each row is a snapshot, so dbt can split them into
   - videos           (latest row per video: title, duration, live stream times...)
@@ -62,7 +64,9 @@ class VideosConfig(dg.Config):
 @dg.asset(
     group_name="youtube_raw",
     kinds={"youtube", "snowflake"},
-    deps=["yt_uploads"],
+    # Any of these can add video IDs. Within a job, Dagster runs yt_videos
+    # after whichever of them are selected; ones not in the job are ignored.
+    deps=["yt_uploads", "yt_playlists", "yt_search_backfill"],
     description="Snapshots of videos.list (details + stats) for new and recently published uploads.",
 )
 def yt_videos(
@@ -82,6 +86,19 @@ def yt_videos(
         else:
             last_fetch = "(select null::varchar as video_id, null::timestamp_tz as last_loaded where false)"
 
+        # Video IDs come from up to three sources: the uploads lists
+        # (yt_uploads), curated playlists (yt_playlists) and date-window
+        # searches (yt_search_backfill); the last two reach history past the
+        # uploads list's 20k cap. UNION ALL stacks them, and the GROUP BY below
+        # collapses a video found by several sources into one row. Sources whose
+        # table doesn't exist yet (asset never run) are left out.
+        sources = [
+            f"select video_id, published_at from {t}"
+            for t in ("YT_UPLOADS", "YT_PLAYLIST_ITEMS", "YT_SEARCH_RESULTS")
+            if table_exists(conn, t)
+        ]
+        all_uploads = "\n                union all\n                ".join(sources)
+
         # One row per upload that's due, with its priority tier.
         # - LEFT JOIN keeps uploads with no YT_VIDEOS row (f.video_id is null).
         # - The -20 hour / -6 day thresholds are slightly under a day/week so a
@@ -92,7 +109,9 @@ def yt_videos(
             f"""
             with uploads as (
                 select video_id, max(published_at) as published_at
-                from YT_UPLOADS
+                from (
+                {all_uploads}
+                )
                 group by video_id
             ),
             due as (

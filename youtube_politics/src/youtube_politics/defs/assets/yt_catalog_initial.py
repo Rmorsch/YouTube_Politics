@@ -48,10 +48,12 @@ def load_catalog() -> list[dict]:
     return entries
 
 
-def current_channels(conn) -> list[tuple[str, str, str]]:
+def current_channels(conn) -> list[tuple[str, str, str, int]]:
     """Latest stored row for every handle currently in channels.yaml.
 
-    Returns (channel_id, handle, uploads_playlist_id) tuples. Downstream assets
+    Returns (channel_id, handle, uploads_playlist_id, video_count) tuples.
+    video_count is the channel's public video total as of that catalog load.
+    Downstream assets
     use this rather than "the catalog's latest run", because a run only
     re-fetches handles that are due (see refresh_days), so the latest run may
     hold just a few channels. Handles removed from the YAML drop out here even
@@ -65,7 +67,9 @@ def current_channels(conn) -> list[tuple[str, str, str]]:
         f"""
         select channel_id,
                handle,
-               raw_data:contentDetails:relatedPlaylists:uploads::string
+               raw_data:contentDetails:relatedPlaylists:uploads::string,
+               -- The API returns counts as strings ("63766"), hence the cast.
+               raw_data:statistics:videoCount::int
         from {TABLE}
         where lower(handle) in ({placeholders})
         -- QUALIFY filters on a window function, like HAVING does for GROUP BY:
@@ -130,8 +134,8 @@ def yt_catalog_initial(
         f"({len(entries) - len(due)} loaded within {config.refresh_days} days)"
     )
 
-    # Step 2: look up every due channel before touching Snowflake again, so a
-    # typo in the YAML fails the run without leaving a half-loaded batch behind.
+    # Step 2: look up every due channel. Bad handles (not found, or no public
+    # videos) are collected and skipped rather than failing the run; see below.
     client = youtube.get_client()
     rows = []
     missing = []
@@ -164,14 +168,21 @@ def yt_catalog_initial(
         )
         context.log.info(f"Fetched {handle} -> {items[0]['id']}")
 
-    # Report both kinds of bad handle together, so one run lists every fix.
-    problems = []
+    # Bad handles are skipped, not fatal: the good channels still load, and the
+    # bad ones are listed in a warning and in the run's metadata (asset page in
+    # the UI) so you can fix them all in one pass. A skipped handle isn't
+    # written, so it counts as "due" again and is re-checked on the next run,
+    # e.g. after you correct it in the YAML.
     if missing:
-        problems.append(f"No YouTube channel found for: {', '.join(missing)}.")
+        context.log.warning(
+            f"No YouTube channel found for {len(missing)} handles (skipped): {', '.join(missing)}. "
+            f"Check them in {CATALOG_PATH.name}."
+        )
     if empty:
-        problems.append(f"Channel has no public videos (wrong channel?): {', '.join(empty)}.")
-    if problems:
-        raise dg.Failure(description=" ".join(problems) + f" Check the handles in {CATALOG_PATH.name}.")
+        context.log.warning(
+            f"{len(empty)} channels have no public videos, likely the wrong channel (skipped): "
+            f"{', '.join(empty)}. Check them in {CATALOG_PATH.name}."
+        )
 
     # Step 3: append the batch to Snowflake.
     # VARIANT is Snowflake's semi-structured type: it stores JSON as-is and
@@ -198,6 +209,9 @@ def yt_catalog_initial(
         metadata={
             "channels_loaded": len(rows),
             "channels_skipped_recent": len(entries) - len(due),
+            # Handles to fix in channels.yaml (empty lists when all is well).
+            "handles_not_found": missing,
+            "handles_no_videos": empty,
             # One channels.list call per due handle, found or not (1 unit each).
             # Same key as the other YouTube assets, so quota is comparable
             # across them in the UI's metadata plots.

@@ -19,7 +19,7 @@
 # Before materializing after adding/changing handles, check them with
 #     uv run python .dev/ping_channels.py
 # (1 quota unit per handle, writes nothing). If a handle is wrong anyway,
-# yt_catalog_initial fails and names it before writing anything.
+# yt_catalog_initial skips it and lists it in a warning and in its run metadata.
 #
 # After editing, re-materialize the yt_catalog_initial asset to load the changes.
 
